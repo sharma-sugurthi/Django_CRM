@@ -9,7 +9,7 @@ __pycache__/
 env/
 venv/
 ENV/
-.env
+.env/
 .venv/
 
 # Django
