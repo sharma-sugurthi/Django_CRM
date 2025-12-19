@@ -19,6 +19,7 @@ class Deal(models.Model):
     value = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     stage = models.CharField(max_length=20, choices=STAGE_CHOICES, default='prospecting')
     probability = models.IntegerField(default=0, help_text="Probability in %")
+    contract = models.FileField(upload_to='contracts/', null=True, blank=True)
     
     closed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
