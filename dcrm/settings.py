@@ -55,7 +55,14 @@ MIDDLEWARE = [
 
 # CORS Configuration
 # ------------------------------------------------------------------
-CORS_ALLOW_ALL_ORIGINS = True  # For development only!
+# CORS Configuration (Secure)
+CORS_ALLOW_ALL_ORIGINS = False  # Lock it down
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",   # React/Vue Frontend (Dev)
+    "http://127.0.0.1:3000",
+    # "https://www.your-crm.com", # Production Domain (Add later)
+]
 
 ROOT_URLCONF = 'dcrm.urls'
 
@@ -127,8 +134,28 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+
+# Storage Configuration
+if config('AWS_ACCESS_KEY_ID', default=None):
+    # AWS S3 Settings (Production)
+    AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')
+    AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='us-east-1')
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
+    
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage"
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+        },
+    }
+else:
+    # Local Storage (Development)
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -150,8 +177,8 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle'
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/day',
-        'user': '1000/day',
+        'anon': '20/minute',
+        'user': '5000/day',
     },
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
@@ -172,4 +199,8 @@ SIMPLE_JWT = {
 }
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-EMAIL_HOST_USER = 'noreply@crm.com' 
+EMAIL_HOST_USER = 'noreply@crm.com'
+# Security Hardening
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'  # Prevent iframe embedding (Clickjacking)
