@@ -1,8 +1,12 @@
-Django
-django-cors-headers
-django-filter
+Django>=5.0
 djangorestframework
 djangorestframework-simplejwt
+django-cors-headers
 mysql-connector-python
-python-decouple
+django-filter
 drf-spectacular
+python-decouple
+pytest
+pytest-django
+boto3
+django-storages
