@@ -8,6 +8,7 @@ from leads.views import LeadViewSet
 from deals.views import DealViewSet
 from activities.views import ActivityViewSet
 from tags.views import TagViewSet
+from accounts.views import OrganizationViewSet
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 router = DefaultRouter()
@@ -16,6 +17,7 @@ router.register(r'leads', LeadViewSet, basename='lead')
 router.register(r'deals', DealViewSet, basename='deal')
 router.register(r'activities', ActivityViewSet, basename='activity')
 router.register(r'tags', TagViewSet, basename='tag')
+router.register(r'organizations', OrganizationViewSet, basename='organization')
 
 urlpatterns = [
     path('health/', views.HealthCheckView.as_view(),name='health-check'),
