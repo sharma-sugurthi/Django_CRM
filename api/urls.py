@@ -8,7 +8,7 @@ from leads.views import LeadViewSet
 from deals.views import DealViewSet
 from activities.views import ActivityViewSet
 from tags.views import TagViewSet
-from accounts.views import OrganizationViewSet
+from accounts.views import OrganizationViewSet, RegisterView, UserDetailView
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 router = DefaultRouter()
@@ -19,10 +19,13 @@ router.register(r'activities', ActivityViewSet, basename='activity')
 router.register(r'tags', TagViewSet, basename='tag')
 router.register(r'organizations', OrganizationViewSet, basename='organization')
 
+
 urlpatterns = [
     path('health/', views.HealthCheckView.as_view(),name='health-check'),
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('register/', RegisterView.as_view(), name='auth_register'),
+    path('auth/me/', UserDetailView.as_view(), name='auth_me'),
     path('', include(router.urls)),
     # API Schema & Documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

@@ -61,6 +61,7 @@ CORS_ALLOW_ALL_ORIGINS = False  # Lock it down
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",   # React/Vue Frontend (Dev)
     "http://127.0.0.1:3000",
+    "http://localhost:5173",
     # "https://www.your-crm.com", # Production Domain (Add later)
 ]
 
@@ -168,6 +169,7 @@ REST_FRAMEWORK = {
 # We'll replace the auth classes later with JWT, but keep a placeholder.
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'accounts.authentication.ApiKeyAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',

@@ -13,7 +13,7 @@ class Deal(models.Model):
 
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='deals')
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='deals', null=True, blank=True)
-    contact = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='deals')
+    contact = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='deals', null=True, blank=True)
     
     name = models.CharField(max_length=200)
     value = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)

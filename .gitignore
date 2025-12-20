@@ -25,3 +25,10 @@ db.sqlite3
 .idea/
 *.swp
 mydb.py
+
+# Frontend
+node_modules/
+dist/
+build/
+*.DS_Store
+Thumbs.db
