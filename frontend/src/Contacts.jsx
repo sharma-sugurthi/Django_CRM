@@ -13,7 +13,9 @@ import {
     Loader2,
     Mail,
     MapPin,
-    Save
+    Save,
+    Pencil,
+    Trash2
 } from 'lucide-react';
 import Modal from './Modal';
 
@@ -81,6 +83,8 @@ const Contacts = () => {
     const [contacts, setContacts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalMode, setModalMode] = useState('create');
+    const [selectedId, setSelectedId] = useState(null);
     const [formData, setFormData] = useState({
         first_name: '',
         last_name: '',
@@ -114,22 +118,64 @@ const Contacts = () => {
         e.preventDefault();
         setSubmitting(true);
         try {
-            await api.post('contacts/', formData);
+            if (modalMode === 'create') {
+                await api.post('contacts/', formData);
+            } else {
+                await api.put(`contacts/${selectedId}/`, formData);
+            }
             setIsModalOpen(false);
-            setFormData({
-                first_name: '',
-                last_name: '',
-                email: '',
-                address: '',
-                description: ''
-            });
+            resetForm();
             fetchContacts();
         } catch (error) {
-            console.error("Failed to create contact", error);
-            alert("Failed to create contact.");
+            console.error("Failed to save contact", error);
+            alert("Failed to save contact.");
         } finally {
             setSubmitting(false);
         }
+    };
+
+    const handleDelete = async (id, e) => {
+        e.stopPropagation(); // Prevent card click if we add logic later
+        if (window.confirm("Are you sure you want to delete this contact?")) {
+            try {
+                await api.delete(`contacts/${id}/`);
+                fetchContacts();
+            } catch (error) {
+                console.error("Failed to delete contact", error);
+                alert("Failed to delete contact.");
+            }
+        }
+    };
+
+    const handleEdit = (contact, e) => {
+        e.stopPropagation();
+        setFormData({
+            first_name: contact.first_name,
+            last_name: contact.last_name,
+            email: contact.email,
+            address: contact.address || '',
+            description: contact.description || ''
+        });
+        setSelectedId(contact.id);
+        setModalMode('edit');
+        setIsModalOpen(true);
+    };
+
+    const resetForm = () => {
+        setFormData({
+            first_name: '',
+            last_name: '',
+            email: '',
+            address: '',
+            description: ''
+        });
+        setModalMode('create');
+        setSelectedId(null);
+    };
+
+    const openCreateModal = () => {
+        resetForm();
+        setIsModalOpen(true);
     };
 
     return (
@@ -141,7 +187,7 @@ const Contacts = () => {
                         <input type="text" placeholder="Search contacts..." className="pl-10 pr-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500" />
                     </div>
                     <button
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={openCreateModal}
                         className="flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-medium transition-colors"
                     >
                         <Plus className="w-4 h-4 mr-2" />
@@ -167,6 +213,20 @@ const Contacts = () => {
                                             <p className="text-gray-400 text-xs">ID: #{contact.id}</p>
                                         </div>
                                     </div>
+                                    <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            onClick={(e) => handleEdit(contact, e)}
+                                            className="p-1.5 hover:bg-indigo-500/20 rounded-lg text-gray-400 hover:text-indigo-400 transition-colors"
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={(e) => handleDelete(contact.id, e)}
+                                            className="p-1.5 hover:bg-red-500/20 rounded-lg text-gray-400 hover:text-red-400 transition-colors"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="space-y-2 text-sm text-gray-300">
                                     {contact.email && (
@@ -188,7 +248,7 @@ const Contacts = () => {
                 )}
             </div>
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add New Contact">
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={modalMode === 'create' ? "Add New Contact" : "Edit Contact"}>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -259,7 +319,7 @@ const Contacts = () => {
                             className="flex items-center px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-medium transition-colors disabled:opacity-50"
                         >
                             {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                            Save Contact
+                            {modalMode === 'create' ? "Save Contact" : "Update Contact"}
                         </button>
                     </div>
                 </form>

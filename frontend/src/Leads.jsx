@@ -11,7 +11,11 @@ import {
     Plus,
     Search,
     Loader2,
-    Save
+    Save,
+    Upload,
+    FileText,
+    Pencil,
+    Trash2
 } from 'lucide-react';
 import Modal from './Modal';
 
@@ -78,6 +82,8 @@ const Leads = () => {
     const [leads, setLeads] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalMode, setModalMode] = useState('create'); // 'create' or 'edit'
+    const [selectedId, setSelectedId] = useState(null);
     const [formData, setFormData] = useState({
         first_name: '',
         last_name: '',
@@ -87,6 +93,8 @@ const Leads = () => {
         source: 'website'
     });
     const [submitting, setSubmitting] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = React.useRef(null);
 
     const fetchLeads = async () => {
         try {
@@ -112,22 +120,88 @@ const Leads = () => {
         e.preventDefault();
         setSubmitting(true);
         try {
-            await api.post('leads/', formData);
+            if (modalMode === 'create') {
+                await api.post('leads/', formData);
+            } else {
+                await api.put(`leads/${selectedId}/`, formData);
+            }
             setIsModalOpen(false);
-            setFormData({
-                first_name: '',
-                last_name: '',
-                email: '',
-                phone: '',
-                status: 'new',
-                source: 'website'
-            });
-            fetchLeads(); // Refresh list
+            resetForm();
+            fetchLeads();
         } catch (error) {
-            console.error("Failed to create lead", error);
-            alert("Failed to create lead. Please check the fields.");
+            console.error("Failed to save lead", error);
+            alert("Failed to save lead. Please check the fields.");
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm("Are you sure you want to delete this lead?")) {
+            try {
+                await api.delete(`leads/${id}/`);
+                fetchLeads();
+            } catch (error) {
+                console.error("Failed to delete lead", error);
+                alert("Failed to delete lead.");
+            }
+        }
+    };
+
+    const handleEdit = (lead) => {
+        setFormData({
+            first_name: lead.first_name,
+            last_name: lead.last_name,
+            email: lead.email,
+            phone: lead.phone || '',
+            status: lead.status,
+            source: lead.source || 'website'
+        });
+        setSelectedId(lead.id);
+        setModalMode('edit');
+        setIsModalOpen(true);
+    };
+
+    const resetForm = () => {
+        setFormData({
+            first_name: '',
+            last_name: '',
+            email: '',
+            phone: '',
+            status: 'new',
+            source: 'website'
+        });
+        setModalMode('create');
+        setSelectedId(null);
+    };
+
+    const openCreateModal = () => {
+        resetForm();
+        setIsModalOpen(true);
+    };
+
+    const handleFileUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        setUploading(true);
+        try {
+            const response = await api.post('leads/upload_csv/', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            alert(response.data.status || "Leads uploaded successfully!");
+            fetchLeads();
+        } catch (error) {
+            console.error("Upload failed", error);
+            alert("Upload failed. Ensure CSV has first_name, last_name, and email columns.");
+        } finally {
+            setUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
@@ -139,13 +213,34 @@ const Leads = () => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                         <input type="text" placeholder="Search leads..." className="pl-10 pr-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500" />
                     </div>
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-medium transition-colors"
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Lead
-                    </button>
+                    <div className="flex space-x-3">
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileUpload}
+                            accept=".csv"
+                            className="hidden"
+                        />
+                        <button
+                            onClick={() => fileInputRef.current.click()}
+                            disabled={uploading}
+                            className="flex items-center px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                        >
+                            {uploading ? (
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                                <Upload className="w-4 h-4 mr-2" />
+                            )}
+                            Upload CSV
+                        </button>
+                        <button
+                            onClick={openCreateModal}
+                            className="flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-medium transition-colors"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Lead
+                        </button>
+                    </div>
                 </div>
 
                 {loading ? (
@@ -161,6 +256,7 @@ const Leads = () => {
                                     <th className="px-6 py-4">Email</th>
                                     <th className="px-6 py-4">Status</th>
                                     <th className="px-6 py-4">Source</th>
+                                    <th className="px-6 py-4 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-700/50">
@@ -170,13 +266,28 @@ const Leads = () => {
                                         <td className="px-6 py-4">{lead.email}</td>
                                         <td className="px-6 py-4">
                                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${lead.status === 'new' ? 'bg-blue-500/20 text-blue-400' :
-                                                lead.status === 'qualified' ? 'bg-green-500/20 text-green-400' :
-                                                    'bg-gray-700 text-gray-300'
+                                                lead.status === 'contacted' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                    lead.status === 'qualified' ? 'bg-green-500/20 text-green-400' :
+                                                        'bg-gray-700 text-gray-300'
                                                 }`}>
                                                 {lead.status}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">{lead.source}</td>
+                                        <td className="px-6 py-4 text-right space-x-2">
+                                            <button
+                                                onClick={() => handleEdit(lead)}
+                                                className="p-1 hover:bg-indigo-500/20 rounded text-gray-400 hover:text-indigo-400 transition-colors"
+                                            >
+                                                <Pencil className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(lead.id)}
+                                                className="p-1 hover:bg-red-500/20 rounded text-gray-400 hover:text-red-400 transition-colors"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -185,7 +296,7 @@ const Leads = () => {
                 )}
             </div>
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add New Lead">
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={modalMode === 'create' ? "Add New Lead" : "Edit Lead"}>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -275,7 +386,7 @@ const Leads = () => {
                             className="flex items-center px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-medium transition-colors disabled:opacity-50"
                         >
                             {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                            Save Lead
+                            {modalMode === 'create' ? "Save Lead" : "Update Lead"}
                         </button>
                     </div>
                 </form>

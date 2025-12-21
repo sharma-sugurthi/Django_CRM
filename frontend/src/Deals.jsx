@@ -12,7 +12,9 @@ import {
     Search,
     Loader2,
     DollarSign,
-    Save
+    Save,
+    Pencil,
+    Trash2
 } from 'lucide-react';
 import Modal from './Modal';
 
@@ -78,6 +80,8 @@ const Deals = () => {
     const [deals, setDeals] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalMode, setModalMode] = useState('create');
+    const [selectedId, setSelectedId] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
         value: '',
@@ -110,21 +114,62 @@ const Deals = () => {
         e.preventDefault();
         setSubmitting(true);
         try {
-            await api.post('deals/', formData);
+            if (modalMode === 'create') {
+                await api.post('deals/', formData);
+            } else {
+                await api.put(`deals/${selectedId}/`, formData);
+            }
             setIsModalOpen(false);
-            setFormData({
-                name: '',
-                value: '',
-                stage: 'prospecting',
-                probability: '50'
-            });
+            resetForm();
             fetchDeals();
         } catch (error) {
-            console.error("Failed to create deal", error);
-            alert("Failed to create deal.");
+            console.error("Failed to save deal", error);
+            alert("Failed to save deal.");
         } finally {
             setSubmitting(false);
         }
+    };
+
+    const handleDelete = async (id, e) => {
+        e.stopPropagation();
+        if (window.confirm("Are you sure you want to delete this deal?")) {
+            try {
+                await api.delete(`deals/${id}/`);
+                fetchDeals();
+            } catch (error) {
+                console.error("Failed to delete deal", error);
+                alert("Failed to delete deal.");
+            }
+        }
+    };
+
+    const handleEdit = (deal, e) => {
+        e.stopPropagation();
+        setFormData({
+            name: deal.name,
+            value: deal.value,
+            stage: deal.stage,
+            probability: deal.probability
+        });
+        setSelectedId(deal.id);
+        setModalMode('edit');
+        setIsModalOpen(true);
+    };
+
+    const resetForm = () => {
+        setFormData({
+            name: '',
+            value: '',
+            stage: 'prospecting',
+            probability: '50'
+        });
+        setModalMode('create');
+        setSelectedId(null);
+    };
+
+    const openCreateModal = () => {
+        resetForm();
+        setIsModalOpen(true);
     };
 
     const getStageColor = (stage) => {
@@ -146,7 +191,7 @@ const Deals = () => {
                         <input type="text" placeholder="Search deals..." className="pl-10 pr-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500" />
                     </div>
                     <button
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={openCreateModal}
                         className="flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-medium transition-colors"
                     >
                         <Plus className="w-4 h-4 mr-2" />
@@ -161,12 +206,28 @@ const Deals = () => {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
                         {deals.map((deal) => (
-                            <div key={deal.id} className="bg-gray-800/50 border border-gray-700 rounded-xl p-5 hover:bg-gray-700/50 transition-all">
+                            <div key={deal.id} className="bg-gray-800/50 border border-gray-700 rounded-xl p-5 hover:bg-gray-700/50 transition-all group">
                                 <div className="flex justify-between items-start mb-4">
                                     <h3 className="font-semibold text-white text-lg">{deal.name}</h3>
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium uppercase ${getStageColor(deal.stage)}`}>
-                                        {deal.stage.replace('_', ' ')}
-                                    </span>
+                                    <div className="flex items-center space-x-2">
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium uppercase ${getStageColor(deal.stage)}`}>
+                                            {deal.stage.replace('_', ' ')}
+                                        </span>
+                                        <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={(e) => handleEdit(deal, e)}
+                                                className="p-1 hover:bg-indigo-500/20 rounded text-gray-400 hover:text-indigo-400 transition-colors"
+                                            >
+                                                <Pencil className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={(e) => handleDelete(deal.id, e)}
+                                                className="p-1 hover:bg-red-500/20 rounded text-gray-400 hover:text-red-400 transition-colors"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="mb-4">
@@ -186,7 +247,7 @@ const Deals = () => {
                 )}
             </div>
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add New Deal">
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={modalMode === 'create' ? "Add New Deal" : "Edit Deal"}>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-400 mb-1">Deal Name</label>
@@ -254,7 +315,7 @@ const Deals = () => {
                             className="flex items-center px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-medium transition-colors disabled:opacity-50"
                         >
                             {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                            Save Deal
+                            {modalMode === 'create' ? "Save Deal" : "Update Deal"}
                         </button>
                     </div>
                 </form>
