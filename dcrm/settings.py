@@ -1,6 +1,8 @@
 from pathlib import Path
 from datetime import timedelta
 from decouple import config
+import dj_database_url
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -15,7 +17,7 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 AUTH_USER_MODEL = 'accounts.User'
 
@@ -44,6 +46,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -56,14 +59,17 @@ MIDDLEWARE = [
 # CORS Configuration
 # ------------------------------------------------------------------
 # CORS Configuration (Secure)
-CORS_ALLOW_ALL_ORIGINS = False  # Lock it down
+CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool)
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",   # React/Vue Frontend (Dev)
     "http://127.0.0.1:3000",
     "http://localhost:5173",
-    # "https://www.your-crm.com", # Production Domain (Add later)
 ]
+
+# Add Production Frontend URL if set
+if config('FRONTEND_URL', default=None):
+    CORS_ALLOWED_ORIGINS.append(config('FRONTEND_URL'))
 
 ROOT_URLCONF = 'dcrm.urls'
 
@@ -98,6 +104,10 @@ DATABASES = {
         'PORT': config('DB_PORT'),
     }
 }
+
+# Override with Render's DATABASE_URL if available (PostgreSQL)
+db_from_env = dj_database_url.config(conn_max_age=600)
+DATABASES['default'].update(db_from_env)
 
 
 # Password validation
@@ -135,6 +145,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Storage Configuration
 if config('AWS_ACCESS_KEY_ID', default=None):

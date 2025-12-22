@@ -10,3 +10,7 @@ pytest
 pytest-django
 boto3
 django-storages
+gunicorn
+psycopg2-binary
+dj-database-url
+whitenoise
