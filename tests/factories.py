@@ -59,8 +59,8 @@ class LeadFactory(DjangoModelFactory):
     organization = factory.SubFactory(OrganizationFactory)
     first_name = factory.Faker("first_name")
     last_name = factory.Faker("last_name")
-    email = factory.Faker("email")
-    phone = factory.Faker("phone_number")
+    email = factory.Sequence(lambda n: f"lead{n}@test.co")
+    phone = factory.Sequence(lambda n: f"+1{n:09d}")
     status = "new"
     source = factory.Faker("word")
 
@@ -81,7 +81,7 @@ class ContactFactory(DjangoModelFactory):
     organization = factory.SubFactory(OrganizationFactory)
     first_name = factory.Faker("first_name")
     last_name = factory.Faker("last_name")
-    email = factory.Faker("email")
+    email = factory.Sequence(lambda n: f"c{n}@test.co")
     address = factory.Faker("address")
     description = factory.Faker("text")
 
