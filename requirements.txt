@@ -14,3 +14,22 @@ gunicorn
 psycopg2-binary
 dj-database-url
 whitenoise
+
+# Code Quality & Formatting
+black
+isort
+flake8
+
+# Security Scanning
+bandit
+safety
+
+# Dead Code Detection
+vulture
+
+# Testing Tools
+factory-boy
+pytest-cov
+
+# Pre-commit Hooks
+pre-commit

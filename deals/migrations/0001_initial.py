@@ -10,25 +10,74 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('accounts', '0001_initial'),
-        ('contacts', '0002_rename_organization_contact_organization_and_more'),
+        ("accounts", "0001_initial"),
+        ("contacts", "0002_rename_organization_contact_organization_and_more"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Deal',
+            name="Deal",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=200)),
-                ('value', models.DecimalField(decimal_places=2, default=0.0, max_digits=12)),
-                ('stage', models.CharField(choices=[('prospecting', 'Prospecting'), ('negotiation', 'Negotiation'), ('closed_won', 'Closed Won'), ('closed_lost', 'Closed Lost')], default='prospecting', max_length=20)),
-                ('probability', models.IntegerField(default=0, help_text='Probability in %')),
-                ('closed_at', models.DateTimeField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('contact', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='deals', to='contacts.contact')),
-                ('organization', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='deals', to='accounts.organization')),
-                ('owner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='deals', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=200)),
+                (
+                    "value",
+                    models.DecimalField(decimal_places=2, default=0.0, max_digits=12),
+                ),
+                (
+                    "stage",
+                    models.CharField(
+                        choices=[
+                            ("prospecting", "Prospecting"),
+                            ("negotiation", "Negotiation"),
+                            ("closed_won", "Closed Won"),
+                            ("closed_lost", "Closed Lost"),
+                        ],
+                        default="prospecting",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "probability",
+                    models.IntegerField(default=0, help_text="Probability in %"),
+                ),
+                ("closed_at", models.DateTimeField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "contact",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="deals",
+                        to="contacts.contact",
+                    ),
+                ),
+                (
+                    "organization",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="deals",
+                        to="accounts.organization",
+                    ),
+                ),
+                (
+                    "owner",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="deals",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
     ]

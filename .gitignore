@@ -20,6 +20,16 @@ staticfiles/
 media/
 db.sqlite3
 
+# Testing & Coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+*.cover
+coverage.xml
+*.mo
+
 # Editor/IDE
 .vscode/
 .idea/
@@ -32,3 +42,6 @@ dist/
 build/
 *.DS_Store
 Thumbs.db
+
+# Pre-commit
+.pre-commit-config.yaml.bak
